@@ -318,9 +318,16 @@ def construir_mockup_dispositivos(
 
     # La máscara antigua del móvil era rectangular y llegaba hasta el marco.
     # Construimos un cristal interior con esquinas redondeadas y margen visible.
-    mascaras["phone"] = Image.new("L", fondo.size, 0)
-    ImageDraw.Draw(mascaras["phone"]).rounded_rectangle(
-        (1045, 420, 1145, 624), radius=4, fill=255
+    escala = 4
+    cristal = Image.new(
+        "L", (fondo.width * escala, fondo.height * escala), 0
+    )
+    ImageDraw.Draw(cristal).rounded_rectangle(
+        (1045 * escala, 420 * escala, 1146 * escala - 1, 625 * escala - 1),
+        radius=11 * escala, fill=255
+    )
+    mascaras["phone"] = cristal.resize(
+        fondo.size, Image.Resampling.LANCZOS
     )
 
     # Siluetas independientes de los dispositivos delanteros. Se recupera
@@ -362,7 +369,7 @@ def construir_mockup_dispositivos(
                 # El recorte deja visible parte del cristal blanco original.
                 # Oscurecemos ese interior antes de insertar la nueva captura.
                 ImageDraw.Draw(base).rounded_rectangle(
-                    (1043, 417, 1148, 628), radius=6, fill=(17, 17, 18)
+                    (1043, 417, 1148, 628), radius=13, fill=(17, 17, 18)
                 )
 
             print(f"→ Capturando versión '{nombre}'...")
