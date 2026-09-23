@@ -46,7 +46,7 @@ SCREEN_BOXES = {
     "desktop": (348, 90, 935, 426),
     "laptop":  (97, 342, 489, 575),
     "tablet":  (884, 294, 1105, 581),
-    "phone":   (1045, 420, 1146, 625),
+    "phone":   (1043, 420, 1144, 625),
 }
 
 
@@ -323,7 +323,7 @@ def construir_mockup_dispositivos(
         "L", (fondo.width * escala, fondo.height * escala), 0
     )
     ImageDraw.Draw(cristal).rounded_rectangle(
-        (1045 * escala, 420 * escala, 1146 * escala - 1, 625 * escala - 1),
+        (1043 * escala, 420 * escala, 1144 * escala - 1, 625 * escala - 1),
         radius=11 * escala, fill=255
     )
     mascaras["phone"] = cristal.resize(
