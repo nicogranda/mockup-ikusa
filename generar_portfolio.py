@@ -330,7 +330,9 @@ def construir_mockup_dispositivos(
         elif nombre == "tablet":
             dibujo.rounded_rectangle((866, 272, 1124, 609), radius=17, fill=255)
         else:
-            dibujo.rounded_rectangle((1039, 409, 1157, 640), radius=15, fill=255)
+            # Ajustado al contorno exterior del móvil. El rectángulo anterior
+            # incluía fondo blanco y dejaba una esquina clara sobre la tablet.
+            dibujo.rounded_rectangle((1041, 411, 1155, 637), radius=13, fill=255)
         siluetas[nombre] = mascara
 
     with sync_playwright() as p:
