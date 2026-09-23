@@ -24,7 +24,7 @@ import urllib.request
 from io import BytesIO
 from pathlib import Path
 
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, ImageDraw
 from playwright.sync_api import sync_playwright
 
 
@@ -308,14 +308,30 @@ def construir_mockup_dispositivos(
     url: str
 ) -> Image.Image:
 
-    base = Image.open(BASE_IMAGE_PATH).convert("RGB")
+    fondo = Image.open(BASE_IMAGE_PATH).convert("RGB")
+    base = fondo.copy()
 
     mascaras = {
-        "desktop": Image.open("mask_desktop.png").convert("L"),
-        "laptop":  Image.open("mask_laptop.png").convert("L"),
-        "tablet":  Image.open("mask_tablet.png").convert("L"),
-        "phone":   Image.open("mask_phone.png").convert("L"),
+        nombre: Image.open(SCRIPT_DIR / f"mask_{nombre}.png").convert("L")
+        for nombre in SCREEN_BOXES
     }
+
+    # Siluetas independientes de los dispositivos delanteros. Se recupera
+    # su marco original antes de pegar la captura de cada uno.
+    siluetas = {}
+    for nombre in ("laptop", "tablet", "phone"):
+        mascara = Image.new("L", fondo.size, 0)
+        dibujo = ImageDraw.Draw(mascara)
+        if nombre == "laptop":
+            dibujo.polygon(
+                [(82, 320), (500, 320), (500, 585),
+                 (546, 621), (39, 621), (82, 585)], fill=255
+            )
+        elif nombre == "tablet":
+            dibujo.rounded_rectangle((866, 272, 1124, 609), radius=17, fill=255)
+        else:
+            dibujo.rounded_rectangle((1039, 409, 1157, 640), radius=15, fill=255)
+        siluetas[nombre] = mascara
 
     with sync_playwright() as p:
 
@@ -323,6 +339,9 @@ def construir_mockup_dispositivos(
         page = browser.new_page()
 
         for nombre, box in SCREEN_BOXES.items():
+
+            if nombre in siluetas:
+                base.paste(fondo, (0, 0), siluetas[nombre])
 
             print(f"→ Capturando versión '{nombre}'...")
 
@@ -337,21 +356,8 @@ def construir_mockup_dispositivos(
                 box
             )
 
-            # Canvas transparente del tamaño COMPLETO del mockup
-            layer = Image.new(
-                "RGB",
-                base.size,
-                (255, 255, 255)
-            )
-
-            # Colocamos screenshot en su coordenada real
-            layer.paste(
-                shot,
-                (box[0], box[1])
-            )
-
-            # La máscara también es 1200x710.
-            # NO SE REDIMENSIONA.
+            layer = Image.new("RGB", base.size)
+            layer.paste(shot, (box[0], box[1]))
             base.paste(
                 layer,
                 (0, 0),
