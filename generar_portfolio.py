@@ -46,7 +46,7 @@ SCREEN_BOXES = {
     "desktop": (348, 90, 935, 426),
     "laptop":  (97, 342, 489, 575),
     "tablet":  (884, 294, 1105, 581),
-    "phone":   (1043, 418, 1147, 627),
+    "phone":   (1045, 420, 1146, 625),
 }
 
 
@@ -316,6 +316,13 @@ def construir_mockup_dispositivos(
         for nombre in SCREEN_BOXES
     }
 
+    # La máscara antigua del móvil era rectangular y llegaba hasta el marco.
+    # Construimos un cristal interior con esquinas redondeadas y margen visible.
+    mascaras["phone"] = Image.new("L", fondo.size, 0)
+    ImageDraw.Draw(mascaras["phone"]).rounded_rectangle(
+        (1045, 420, 1145, 624), radius=4, fill=255
+    )
+
     # Siluetas independientes de los dispositivos delanteros. Se recupera
     # su marco original antes de pegar la captura de cada uno.
     siluetas = {}
@@ -350,6 +357,13 @@ def construir_mockup_dispositivos(
 
             if nombre in siluetas:
                 base.paste(fondo, (0, 0), siluetas[nombre])
+
+            if nombre == "phone":
+                # El recorte deja visible parte del cristal blanco original.
+                # Oscurecemos ese interior antes de insertar la nueva captura.
+                ImageDraw.Draw(base).rounded_rectangle(
+                    (1043, 417, 1148, 628), radius=6, fill=(17, 17, 18)
+                )
 
             print(f"→ Capturando versión '{nombre}'...")
 
