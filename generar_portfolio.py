@@ -89,10 +89,10 @@ VIEWPORTS = {
 # de ver el primer resultado real.
 
 LOGO_BOX = (
-    35,
-    25,
-    250,
-    110
+    20,
+    12,
+    267,
+    128
 )
 
 
@@ -108,14 +108,9 @@ LOGO_BOX = (
 #
 # seo_icon.png
 
-SEO_ICON_POS = (
-    1015,
-    35
-)
-
 SEO_ICON_MAX_SIZE = (
-    145,
-    75
+    62,
+    46
 )
 
 
@@ -489,7 +484,7 @@ def colocar_logo(
     canvas: Image.Image,
     logo: Image.Image,
     box: tuple
-):
+) -> tuple[int, int, int, int]:
 
     x0, y0, x1, y1 = box
 
@@ -522,13 +517,16 @@ def colocar_logo(
         )
     )
 
+    return (px, py, px + logo_fit.width, py + logo_fit.height)
+
 
 # =========================================================
 # COLOCAR ICONO SEO
 # =========================================================
 
 def colocar_icono_seo(
-    canvas: Image.Image
+    canvas: Image.Image,
+    logo_bounds: tuple = None
 ):
 
     if not SEO_ICON_PATH.exists():
@@ -544,12 +542,21 @@ def colocar_icono_seo(
         SEO_ICON_PATH
     ).convert("RGBA")
 
+    # El PNG original tiene márgenes transparentes amplios.
+    bounds = seo_icon.getbbox()
+    if bounds is None:
+        return
+    seo_icon = seo_icon.crop(bounds)
+
     seo_icon.thumbnail(
         SEO_ICON_MAX_SIZE,
         Image.Resampling.LANCZOS
     )
 
-    x, y = SEO_ICON_POS
+    # Ubicarlo inmediatamente a la derecha del logo, sin entrar en la pantalla.
+    x = max(logo_bounds[2] + 12, 205) if logo_bounds else 205
+    x = min(x, 340 - seo_icon.width)
+    y = max(14, (logo_bounds[1] + logo_bounds[3] - seo_icon.height) // 2) if logo_bounds else 38
 
     canvas.alpha_composite(
         seo_icon,
@@ -583,13 +590,14 @@ def generar_portfolio(
     # Logo del cliente
     # -----------------------------------------------------
 
+    logo_bounds = None
     if logo_ref:
 
         logo = cargar_logo(
             logo_ref
         )
 
-        colocar_logo(
+        logo_bounds = colocar_logo(
             devices,
             logo,
             LOGO_BOX
@@ -609,7 +617,8 @@ def generar_portfolio(
     if incluye_seo:
 
         colocar_icono_seo(
-            devices
+            devices,
+            logo_bounds
         )
 
     # -----------------------------------------------------
