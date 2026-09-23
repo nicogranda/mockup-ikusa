@@ -24,7 +24,7 @@ import urllib.request
 from io import BytesIO
 from pathlib import Path
 
-from PIL import Image, ImageOps, ImageDraw
+from PIL import Image, ImageOps, ImageDraw, ImageChops
 from playwright.sync_api import sync_playwright
 
 
@@ -330,10 +330,16 @@ def construir_mockup_dispositivos(
         elif nombre == "tablet":
             dibujo.rounded_rectangle((866, 272, 1124, 609), radius=17, fill=255)
         else:
-            # Ajustado al contorno exterior del móvil. El rectángulo anterior
-            # incluía fondo blanco y dejaba una esquina clara sobre la tablet.
-            dibujo.rounded_rectangle((1041, 411, 1155, 637), radius=13, fill=255)
+            dibujo.rounded_rectangle((1039, 409, 1157, 640), radius=15, fill=255)
         siluetas[nombre] = mascara
+
+    # En la imagen original el móvil fue suavizado contra una pantalla blanca.
+    # Extraemos la opacidad del marco oscuro para que los píxeles casi blancos
+    # no formen un halo cuando detrás aparece la captura real de la tablet.
+    oscuridad = ImageOps.grayscale(fondo).point(
+        lambda valor: min(255, max(0, (245 - valor) * 2))
+    )
+    siluetas["phone"] = ImageChops.multiply(siluetas["phone"], oscuridad)
 
     with sync_playwright() as p:
 
